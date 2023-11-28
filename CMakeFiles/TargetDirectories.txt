@@ -1,3 +1,0 @@
-D:/fluid_sim/CMakeFiles/fluid_sim.dir
-D:/fluid_sim/CMakeFiles/ALL_BUILD.dir
-D:/fluid_sim/CMakeFiles/ZERO_CHECK.dir
