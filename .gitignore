@@ -2,3 +2,10 @@
 .dist/
 build/
 CMakeFiles/
+SDL2.dll
+fluid_sim.cflags
+fluid_sim.config
+fluid_sim.cxxflags
+fluid_sim.files
+fluid_sim.includes
+fluid_sim.creator
