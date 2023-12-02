@@ -1,10 +1,12 @@
 #include <cstdio>
 #include <chrono>
 #include <thread>
+#include <vector>
 
 #include "SDL.h"
 #undef main
 #include "fluid.h"
+#include "collisionobject.h"
 
 // Screen dimension constants
 const int SCREEN_WIDTH = 1280;
@@ -19,7 +21,7 @@ SDL_Window* window = NULL;
 const SDL_Color BACKGROUND_COLOR = { 0xFF, 0xFF, 0xFF, 0xFF};
 
 const int RADIUS = 5;
-const int ROWS = 5;
+const int ROWS = 10;
 const int COLS = 10;
 
 typedef std::chrono::high_resolution_clock Clock;
@@ -55,17 +57,33 @@ int main() {
         return 1;
     }
 
-    Fluid fluid = Fluid(ROWS, COLS, 100, 100, COLS * 30, ROWS * 30, RADIUS);
+    Fluid fluid = Fluid(ROWS, COLS, Point {500, 200}, Vector2d(COLS * 30, ROWS * 30), RADIUS);
+    // Create a collision plane
+    CollisionLine ground = CollisionLine(Point {50, 700}, Point {1000, 700} );
+    CollisionLine left = CollisionLine(Point {50, 50}, Point {50, 700});
+    CollisionLine right = CollisionLine(Point {1000, 50}, Point {1000, 700});
+    std::vector<CollisionObject*> objects = {&ground, &left, &right};
     SDL_Color color = {0x42, 0x87, 0xF5, 0xFF};
 
     // Poll events
     SDL_Event e;
 
     bool quit = false;
+    bool paused = false;
+    bool will_repause = false;
+
     while( quit == false ) {
         while( SDL_PollEvent( &e ) ) {
             if( e.type == SDL_QUIT ) quit = true;
+            else if (e.type == SDL_KEYDOWN) {
+                if (e.key.keysym.sym == SDLK_SPACE) paused = !paused;
+                else if (e.key.keysym.sym == SDLK_RETURN && paused) {
+                    paused = false;
+                    will_repause = true;
+                }
+            }
         }
+        if (paused) { continue; }
 
         // Time the start of this render cycle
         Clock::time_point start_time = Clock::now();
@@ -74,9 +92,14 @@ int main() {
         // We clear what we draw before
         SDL_RenderClear(renderer);
         // Update fluid
-        fluid.update(0.02); // FIXME
+        fluid.update(0.02, objects); // FIXME
         // Draw fluid
         fluid.draw(renderer, color);
+        // Render ground
+        for (CollisionObject* object : objects) {
+            object->render(renderer);
+        }
+
         // Set the color to what was before
         SDL_SetRenderDrawColor(renderer, BACKGROUND_COLOR.r, BACKGROUND_COLOR.g, BACKGROUND_COLOR.b, BACKGROUND_COLOR.a);
         // .. you could do some other drawing here
@@ -87,6 +110,11 @@ int main() {
         milliseconds diff = std::chrono::duration_cast<milliseconds>(current_time - start_time);
         // sleep until the next frame
         std::this_thread::sleep_for(WAIT_TIME - diff);
+
+        if (will_repause) {
+            will_repause = false;
+            paused = true;
+        }
     }
 
     SDL_DestroyWindow(window);

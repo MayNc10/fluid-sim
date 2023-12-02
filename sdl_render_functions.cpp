@@ -1,8 +1,9 @@
 #include "SDL.h"
 #include "sdl_render_functions.h"
+#include "point.h"
 
 // Ripped from https://stackoverflow.com/questions/65723827/sdl2-function-to-draw-a-filled-circle
-void draw_circle(SDL_Renderer* renderer, int32_t center_x, int32_t center_y, int32_t radius, SDL_Color color) {
+void draw_circle(SDL_Renderer* renderer, Point center, int32_t radius, SDL_Color color) {
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
     int x = 0;
     int y = radius;
@@ -10,10 +11,10 @@ void draw_circle(SDL_Renderer* renderer, int32_t center_x, int32_t center_y, int
 
     while (x <= y)
     {
-        SDL_RenderDrawLine(renderer, center_x - x, center_y - y, center_x + x, center_y - y);
-        SDL_RenderDrawLine(renderer, center_x - y, center_y - x, center_x + y, center_y - x);
-        SDL_RenderDrawLine(renderer, center_x - y, center_y + x, center_x + y, center_y + x);
-        SDL_RenderDrawLine(renderer, center_x - x, center_y + y, center_x + x, center_y + y);
+        SDL_RenderDrawLine(renderer, center.x - x, center.y - y, center.x + x, center.y - y);
+        SDL_RenderDrawLine(renderer, center.x - y, center.y - x, center.x + y, center.y - x);
+        SDL_RenderDrawLine(renderer, center.x - y, center.y + x, center.x + y, center.y + x);
+        SDL_RenderDrawLine(renderer, center.x - x, center.y + y, center.x + x, center.y + y);
 
         if (m > 0)
         {
