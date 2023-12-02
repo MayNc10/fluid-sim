@@ -9,3 +9,4 @@ fluid_sim.cxxflags
 fluid_sim.files
 fluid_sim.includes
 fluid_sim.creator
+fluid_sim.creator.user
