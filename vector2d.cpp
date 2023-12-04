@@ -9,6 +9,9 @@ float Vector2d::get_y() const {
     return this->y;
 }
 
+void Vector2d::set_x(float x) { this->x = x; }
+void Vector2d::set_y(float y) { this->y = y; }
+
 Vector2d& Vector2d::operator+=(const Vector2d& rhs) {
     this->x += rhs.x;
     this->y += rhs.y;

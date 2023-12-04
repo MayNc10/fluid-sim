@@ -3,9 +3,7 @@
 #include <optional>
 #include <cmath>
 #include <cstdio>
-# define PI           3.14159265358979323846
-
-const float DAMPING = 0.9;
+#include "constants.h"
 
 std::optional<std::tuple<Vector2d, Point, float>> CollisionLine::has_collided(const Point initial_position, const Vector2d incoming) const {
     // This is essentially asking whether the point from the initial point crosses this line
@@ -50,7 +48,7 @@ std::optional<std::tuple<Vector2d, Point, float>> CollisionLine::has_collided(co
         Vector2d rot_mat_top = Vector2d(std::cos(theta_prime), -std::sin(theta_prime));
         Vector2d rot_mat_bot = Vector2d(std::sin(theta_prime), std::cos(theta_prime));
 
-        Vector2d exit = Vector2d(Vector2d::dot(rot_mat_top, inv_incoming), Vector2d::dot(rot_mat_bot, inv_incoming)) * DAMPING;
+        Vector2d exit = inv_incoming * DAMPING;//Vector2d(Vector2d::dot(rot_mat_top, inv_incoming), Vector2d::dot(rot_mat_bot, inv_incoming)) * DAMPING;
         return std::tuple<Vector2d, Point, float>{exit, intersect, t};
     } else {
         return std::nullopt;

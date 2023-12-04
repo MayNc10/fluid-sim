@@ -22,6 +22,9 @@ public:
     float get_x() const;
     float get_y() const;
 
+    void set_x(float x);
+    void set_y(float y);
+
     Vector2d& operator+=(const Vector2d& rhs);
 
     friend Vector2d operator+(Vector2d lhs, const Vector2d& rhs);
