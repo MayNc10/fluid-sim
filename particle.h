@@ -12,7 +12,16 @@ class Particle {
 public:
     Particle(Point initial_position)
         : position(initial_position), past_position(initial_position), velocity(Vector2d(0, 0)), density(0) {}
-    Point get_position() const { return this->position; }
+    Particle()
+        : position(Point {0, 0}), past_position(Point {0, 0}), velocity(Vector2d(0, 0)), density(0) {}
+
+    Point get_position() const {
+        if(this == nullptr) {
+            printf("WHY.\n");
+            abort();
+        }
+        return this->position;
+    }
     Vector2d get_velocity() const { return this->velocity; } // Account for inverted axis
 
     // Y is subtracted, because in SDL coords, 0 is at the top

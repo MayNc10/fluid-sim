@@ -2,6 +2,13 @@ cmake_minimum_required(VERSION 3.7)
 set(CMAKE_CXX_STANDARD 17)
 list(APPEND CMAKE_PREFIX_PATH "C:\\Users\\naten\\Documents\\SDL2-devel-2.28.5-VC\\SDL2-2.28.5\\cmake")
 
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O2")
+
 project(fluid_sim LANGUAGES CXX)
 find_package(OpenMP REQUIRED)
 
