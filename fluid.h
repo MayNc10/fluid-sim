@@ -20,6 +20,7 @@ public:
     // FIXME: Abstract kernel functions!
     static float kernel(float radius, float dst);
     static float kernel_derivative(float radius, float dst);
+    static float color_logistic(float max_density, float density);
 
     float density(Point p) const;
     Vector2d pressure_gradient(Particle p) const;
@@ -43,7 +44,7 @@ private:
     float current_max_density;
 
     // FIXME: Only based on particles that exist on screen - this is bad in general
-    std::vector<Particle>* particles; // divide space into cells
+    std::vector<std::vector<Particle>> particles; // divide space into cells
     int cols;
     int rows;
 };

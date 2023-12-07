@@ -14,9 +14,6 @@
 #include "collisionobject.h"
 #include "constants.h"
 
-const int RATIO_SCALING = 2;
-const int TEX_BLUR_SCALING = 2;
-
 auto RNG = std::default_random_engine {};
 const int ITERS_BEFORE_RESET = 1;
 int ITER = 0;
@@ -35,7 +32,7 @@ Fluid::Fluid(int num_rows, int num_columns, Point base, float offset_per_item, i
     int rows = (int) std::ceil(((float) size.y / smoothing_radius));
     this->cols = cols;
     this->rows = rows;
-    std::vector<Particle>* particles = new std::vector<Particle>[cols * rows];
+    std::vector<std::vector<Particle>> particles = std::vector<std::vector<Particle>>(cols * rows);
 
 
     for (int i = 0; i < num_rows; i++) {
@@ -74,6 +71,7 @@ void Fluid::draw(SDL_Renderer* renderer, SDL_Color color) {
 
 
 void Fluid::draw_texture(SDL_Renderer* renderer) {
+
     // get texture size
     SDL_Point size;
     SDL_QueryTexture(this->tex, NULL, NULL, &size.x, &size.y);
@@ -85,6 +83,9 @@ void Fluid::draw_texture(SDL_Renderer* renderer) {
         ITER = -1;
     }
     ITER += 1;
+    std::vector<int> pixel_idx = std::vector<int>(this->pixels.size() / 4);
+    std::iota(pixel_idx.begin(), pixel_idx.end(), 0);
+
 
     std::vector<int> offsets = std::vector<int>(smoothing_radius * 2 * TEX_BLUR_SCALING + 1);
     std::iota(offsets.begin(), offsets.end(), -smoothing_radius * TEX_BLUR_SCALING);
@@ -109,17 +110,19 @@ void Fluid::draw_texture(SDL_Renderer* renderer) {
                         [&] (auto&& y_offset) {
                             int y = p.get_position().y + y_offset;
                             const unsigned int offset = ( size.x * y * 4 ) + x * 4;
+                            if (offset > this->pixels.size() || offset < 0) return;
 
                             if (pixels[offset + 3] != 0) return;
 
                             // get the density
                             float density = this->density(Point {(float)x, (float)y});
-                            float density_ratio = (density / this->current_max_density);
+                            float scaling = density / this->current_max_density * RATIO_SCALING;//Fluid::color_logistic(this->current_max_density, density);
+                            //if (density != 0) printf("density: %f, max_density: %f, Scaling: %f\n", density, this->current_max_density, scaling);
 
                             // calculate color based on density
-                            pixels[offset] = this->color.b * density_ratio * RATIO_SCALING; // b
-                            pixels[offset + 1] = this->color.g * density_ratio; // g
-                            pixels[offset + 2] = this->color.r * density_ratio; // r
+                            pixels[offset] = this->color.b * scaling; // b
+                            pixels[offset + 1] = this->color.g * scaling; // g
+                            pixels[offset + 2] = this->color.r * scaling; // r
                             pixels[offset + 3] = SDL_ALPHA_OPAQUE; // a
                         }
                     );
@@ -127,6 +130,7 @@ void Fluid::draw_texture(SDL_Renderer* renderer) {
             );
         }
     );
+
 
     // update texture
     SDL_UpdateTexture(this->tex, nullptr, pixels.data(), size.x * 4);
@@ -191,7 +195,7 @@ void Fluid::update(float dt, const std::vector<CollisionObject*>& objects) {
                 Vector2d net_accel = pressure_accel + external;
                 //printf("Net accel: (%f, %f), particle coords: (%f, %f)\n", net_accel.get_x(), net_accel.get_y(),
                 //       particle.get_position().x, particle.get_position().y);
-                //pressure_accel.set_y(pressure_accel.get_y() * -1);
+
                 particle.update_position(net_accel, dt, objects);
             }
         }
@@ -212,9 +216,9 @@ void Fluid::update(float dt, const std::vector<CollisionObject*>& objects) {
 
                 // reassign particle
                 if (v_idx != idx) {
-                    this->particles[v_idx].push_back(particle);
-                    //cell.erase(cell.begin() + cell_idx);
-                    //cell_idx -= 1;
+                    if(v_idx < this->particles.size()) {
+                        this->particles[v_idx].push_back(particle);
+                    }
                 }
                 else {
                     new_cell.push_back(particle);
@@ -235,13 +239,20 @@ float Fluid::kernel(float radius, float dst) {
 
     float volume = (PI * std::pow(radius, 4)) / 6;
     return (radius - dst) * (radius - dst) / volume;
+
+    //float volume = (PI * std::pow(radius, 4)) / 6;
+    //return (radius - dst) * (radius - dst) * (radius - dst) / volume;
 }
 
 float Fluid::kernel_derivative(float radius, float dst) {
     if (dst >= radius) return 0;
 
+
     float scale = 12 / (PI * std::pow(radius, 4));
-    return (dst - radius) * scale;
+    return -(radius - dst) * scale;
+
+    //float scale = 18 / (PI * std::pow(radius, 4));
+    //return -(radius - dst) * (radius - dst) * scale;
 }
 
 
@@ -257,10 +268,15 @@ float Fluid::density(Point p) const {
             int idx = this->idx(row_idx + drow, col_idx + dcol);
 
             if (idx > this->rows * this->cols) return density; // there should've be any more valid cells
-            std::vector<Particle>& particles = this->particles[idx];
+            if(idx < 0) continue;
+            const std::vector<Particle>& particles = this->particles[idx];
 
 
             for (const Particle& particle : particles) {
+                if (&particle == nullptr) {
+                    printf("MASSIVE ERROR: PARTICLE WAS NULL\n");
+                    continue;
+                }
 
                 float dst = (particle.get_position() - p).magnitude();
                 float influence = Fluid::kernel(this->smoothing_radius, dst);
@@ -282,8 +298,11 @@ Vector2d Fluid::pressure_gradient(Particle p) const {
     for (int drow = -1; drow <= 1; drow++) {
         for (int dcol = -1; dcol <= 1; dcol += 1) {
             int idx = this->idx(row_idx + drow, col_idx + dcol);
-            if (idx > rows * cols) continue;
-            std::vector<Particle>& particles = this->particles[idx];
+
+            if (idx > this->rows * this->cols) return pressure_gradient; // there should've be any more valid cells
+            if(idx < 0) continue;
+
+            const std::vector<Particle>& particles = this->particles[idx];
 
             for (const Particle& particle : particles) {
                 float dst = (particle.get_position() - p.get_position()).magnitude();
@@ -324,3 +343,13 @@ int Fluid::idx(Point p) const {
 int Fluid::idx(int row_idx, int col_idx) const {
     return row_idx * this->cols + col_idx;
 }
+
+// from https://math.stackexchange.com/questions/1832177/sigmoid-function-with-fixed-bounds-and-variable-steepness-partially-solved
+float Fluid::color_logistic(float max_density, float density) {
+    float b = (max_density / density - 1 + LOGISTIC_EPSILON);
+    float b_k = std::pow(b, -LOGISTIC_GROWTH_RATE);
+    float denom = 1 + b_k;
+    //if (density != 0) printf("density: %f, max density: %f, b: %f, b_k: %f, denom: %f, ans: %f\n", density, max_density, b, b_k, denom, 1 - 1 / denom);
+    return 1 - 1 / denom;
+}
+

@@ -24,10 +24,12 @@ const SDL_Color BACKGROUND_COLOR = { 0xFF, 0xFF, 0xFF, 0xFF};
 const int RADIUS = 2;
 const int ROWS = 17;
 const int COLS = 17;
-const int PARTICLE_DISTANCE = 10;
-const float PRESSURE_MULTIPLIER = 50;
-const float SMOOTHING_RADIUS = PARTICLE_DISTANCE * 4;
-const float TARGET_DENSITY = 2;
+const int PARTICLE_DISTANCE = 20;
+const float SMOOTHING_RADIUS = PARTICLE_DISTANCE * 3;
+const float TARGET_DENSITY = 1;
+
+const float PRESSURE_MULTIPLIER = 20;
+
 const SDL_Color OBJECT_COLOR = {0xFF, 0xFF, 0xFF, 0xFF};
 const SDL_Color FLUID_COLOR = {0x42, 0x87, 0xF5, 0xFF};
 
@@ -69,7 +71,7 @@ int main() {
 
   SDL_Texture* texture = SDL_CreateTexture( renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, tex_width, tex_height );
 
-  Fluid fluid = Fluid(ROWS, COLS, Point {500, 300}, PARTICLE_DISTANCE, RADIUS,
+  Fluid fluid = Fluid(ROWS, COLS, Point {400, 200}, PARTICLE_DISTANCE, RADIUS,
                       SMOOTHING_RADIUS, TARGET_DENSITY, PRESSURE_MULTIPLIER, texture, FLUID_COLOR);
   // Create a collision plane
   CollisionLine ground = CollisionLine(Point {50, 700}, Point {1000, 700} );

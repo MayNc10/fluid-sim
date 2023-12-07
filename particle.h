@@ -16,10 +16,6 @@ public:
         : position(Point {0, 0}), past_position(Point {0, 0}), velocity(Vector2d(0, 0)), density(0) {}
 
     Point get_position() const {
-        if(this == nullptr) {
-            printf("WHY.\n");
-            abort();
-        }
         return this->position;
     }
     Vector2d get_velocity() const { return this->velocity; } // Account for inverted axis
